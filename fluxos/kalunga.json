@@ -1,0 +1,301 @@
+{
+  "name": "Pesquisa de produtos Kalunga",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -304
+      ],
+      "id": "b26f27a1-089f-46e4-825d-dcb1d4a798d1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BogMwuDZvfhC4JRmlZlHzR-bLLYgLCWrI80sEfRmQ5I",
+          "mode": "list",
+          "cachedResultName": "Planilha Kalunga",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BogMwuDZvfhC4JRmlZlHzR-bLLYgLCWrI80sEfRmQ5I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Categorias",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BogMwuDZvfhC4JRmlZlHzR-bLLYgLCWrI80sEfRmQ5I/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Ativo",
+              "lookupValue": "Sim"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -624,
+        -464
+      ],
+      "id": "69bd92a0-001f-481d-b7a1-6c74f76519dc",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wHIpEHjK5qArJxcM",
+          "name": "Google Sheets account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.kalunga.com.br/busca/1",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.query }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authority",
+              "value": "www.kalunga.com.br"
+            },
+            {
+              "name": "accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+            },
+            {
+              "name": "cookie",
+              "value": "4161a97af95b87403891e40ac0183fd95fa5a4bbeaf5; cgnckCookieID=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODg4OTg1ODUuMTIyODQ0LCJrZXkiOiJDb29raWVJRCIsInZhbHVlIjoiNDE2MWE5N2FmOTViODc0MDM4OTFlNDBhYzAxODNmZDk1ZmE1YTRiYmVhZjUiLCJ1c2VyYWdlbnQiOiJNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ5LjAuMC4wIFNhZmFyaS81MzcuMzYiLCJzaWduYXR1cmUiOiJlNGMxNTIwOTY2NDk0YzgwMzkwMmUzYWUwM2MwNGQ2NTIwMGU5ZDFiYjNlMWIwYWYwMDUyMTIxMWIzZTQ4MTA4In0.GGGIbg0OlY_YhhOGuYw-XeVPLRsxJP1ZcdPyrYg9w2k; _cq_duid=1.1781122584.1XNje2WA31NcMEBi; _gcl_au=1.1.568464008.1781122584; _fbp=fb.2.1781122584530.985817018637059651; _ga=GA1.1.489213752.1781122585; _cq_40239_v=NDAyMzlfY3EyMV9m; __bid=e9b90178-38f6-4924-93e3-0b63c1debd87; ak_bmsc=A1A271EDEFC99EE4EEF0DF59D2D82B1C~000000000000000000000000000000~YAAQBPEVAjsFORefAQAAhzl+GgBtHbSiD51XfyeUi9tpKp2xItDonG9ziWglc0AHDhgaWpBTD9IC15zEBZkMYhIeSa7dfIDmN464LdBSLHykGpGbJC075lP1j6mPHKmFnPpSuFmt15cSEtRb+GDOzURTOI6TF6cTQR2vAy0tbgJb921G4lfhPuhUvoNYYiI0h9WUUuNB6OkaMM8Jaam2OC8bPujq0C/SmAZWu/Z0xEQBP7Ni1ev9dEI2iaVw6A2DfVvlH/ySNU6reMV02ffwhWl3mSHLfZysZZBxiCyYSz89tRrxVDjHt5xbVt7ZVVv/gxdgv9+TrDjnD0gfdyhZQmhcaJQvWXooaqFAjxGbRSDaGXbCacNS+uapLxE+oPe/dGbYQQ8LcKK3PE1p+6gJLZtA/fvvGbdrJjJtir8VU0L9I7jJh7U4Fv4=; click_vendas=eyJDRF9Db29raWUiOiAiZjY2MzA0ZDYzNWVmOGY5MzNhM2U0NzUzOTYxNDBlNjEwNzVjYjU2MTgwNDEiLCAicGNJRCI6IDAsICJEYXRhQ2xpY2siOiAiMjAyNi0wNi0zMFQxODo0NTowOC4xMDMwNjItMDM6MDAiLCAiaXNfbW9iaWxlIjogZmFsc2UsICJ1cmxfcmVmZXIiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS8iLCAidWx0X251bWVyb19wZWRpZG8iOiBudWxsfQ%3D%3D; _cq_suid=1.1782855903.z0PxXJ6Co9sNnWRK; s-cookie=4195096492.20480.0000; session=eyJjc3JmX3Rva2VuIjoiMmE1OTZhMWZkOGMwNzhkZDU5ZjMzMzMwNzkxOTA4YWNjMTA2OWU4NSJ9.akQ4_A.s9EkKtPFrcoo9UJc5xP5Zl7r2M8; _abck=07DAE388009A210B7E039078ECA2DBC3~0~YAAQBPEVAvkHORefAQAAlwF/GhCuMSIQn5im6EREHevDasvvEnNrCpXLxRldDY63L+nQE2ydm0NYgfWf7I7Nts1Tc2ggDFJp5mtgJUpiNwwfa07YyQJgaznOu0FE48QHXSwnNgSK9IxRtCDDNVirxuLCegGRXIJVyQdq8Q27eM+T/QNtiQWQ8M+q/Sfty3Xd1xsKRiS+5o/RBRf2EJvMvlPL4T4KMWtv9yUD/mwbWRbMbkPmftEUoGkeMtSZmQkxfA02fgmnZkvOVu+qPM6v2Dtd8Key9ycORVBvaY2D7616cYk5jJIWOYhIum+IsxChO9srfOWBFVTevQEtt7gSwJHw0vKMZbTl4pwUmVGsQMdptS9p6qZaw8vb0/t/IgtqmW0FUSUe+b0hOvJLSlCH2EY4vNnHfxZ6dbtHkV86iLQPuDLLPUKqrd455NhP6r/eZBSBSGUsMoDYdg/OvUoDmU8d/UJV0FnvQTZ3+tLEVnT0/i79kZ8VNtEwgaZt3Z98c3pJzngdCrsNEmNPstw1dGbKkTjUn9+mRwVVPUd9BaDbiGJYrKCL0dUYw3zQsuidVxORjiNUuhgd01n9/mJtsTOcH8wZcRKqmVZSXyIEBdyVQEch6fxPVSSsJiZ3Q9Il+4hWQWmgoNBjorsEn4A9gfIkXCxFXFgNNkQAcYo4nA==~-1~-1~1782859508~AAQAAAAF%2f%2f%2f%2f%2f03Rcds5uj7JJ+HEnxWeUkA%2f2aDKLH4rDu9oPGbPie6SahvYrn7Zzy19a6aPYoA6GGYm6oHvAOTT7prqjUNfCyVTTAEUWOAJjuDKV7yWyM0waDG7RwGfH2jn83P4EEySsqsIL+s%3d~-1; bm_sz=259C078B9AE423CB7FD00F8969D75E3E~YAAQBPEVAu8vORefAQAAb66JGgAYVrm9jvV0CEvQS/vEK31FBodNZj5xy2qfjQ7RwGOsgt9hL5LAtOCC51lUFu2vbdg4q5KWzyN3+peWYuy3IESyKtxa8oFHMY1mB4xKL+DBDcBO0m/i/y/fADbb1dsJKOaHhWlVianhL/ogft6MzHbQocFUuFzeMofNuJu6DhUZ3N9m0kTuPYmKzzRKfMkzmLyxdZjcIM42p4WPbNrnDfDdM5N4IOx23GWYM3QcnH/565zXf+fj3O8JG5SyFL01eqKzjvorJMtMCzZjjbwNWJZHnmM6mICwPWVj76qZhwaU3Br104f+ERDlSXYHBxFxmGQguQAQ8f00fFhieQEaVO5eNuuf9k6EOAgkobKBPWT8dDo1w2VOX0PU6KvWsyYyu10U0+Ew+eUU1LESQTN8yPbFX7uVwjMuqVC7Zx1sOaQs4ebLCLZaasfT4DKQOxHQOHKZjv7mw7YCxgyZH/xONViSJCr2vHhDL+X4~3551793~4337733; _cq_session=3.1782855903433.xDkYlrxqew26x69B.1782856654283; Cookie_HN=aHR0cHMlM0EvL3d3dy5rYWx1bmdhLmNvbS5ici9idXNjYS8xJTNGcSUzRGNhZGVpcmEtZGUtZXNjcml0b3Jpby1yb2Rpbmhhcw==; bm_sv=011F41CD134FBF99F7EB3D4CC1BBBE35~YAAQBPEVAvsvORefAQAAm7CJGgDD4JO4hlDIUO033ogfWX+GdEszicrYm2Losbnp6/q7QKSP3ac6lhroIApW2g0Uc45CpY9q3FMzHz79Ajmbm6R85EyAz9EDkCC5IbKKGXR27mwtimSmQ0VlsGytggYVRHJjJNTPafBiU6DhNYce7kANsFOoFEF4MKyH7C8RNOZnW1W+TMqDTsfSIEyB8JyZYftIM9cChStmRpaCPqLI+6Hp2wGGyQSk5j3jhstO8ma/rW8=~1; _cq_s=GLkp4tWky3BcfM6w:60r0hTv66QqP8Rp2oKhizyB5VHZr8gMPfCZ83JPZ6oGydn7B0IbQhrD/oNkDnaghXDmUl6oXtfsTmHAcoVHUuBbhONLNi+ELplWaBQbTgdeenQL19mTUNoIqD5Jb1EmT8hM9Ma1rkq7l/ZenWdjXdVyaYQXQZqfQ+OPRvRm8r2KX/wk/PbDwdFJgJ84Jy20N8R/MRSd0aWGikByPdp425mgyK+sYzO+AFVAzhWvzzQ==:BJWYHwHkEnjIUi9i9bGY3w==; _ga_KFK6JH5DYR=GS2.1.s1782855903$o3$g1$t1782856654$j9$l0$h0; _uetsid=f3dade5074cc11f1a8ce47cc774debb1; _uetvid=41285f60650911f18030e3ca2c7ba2ed|"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "x-csrf-token",
+              "value": "IjJhNTk2YTFmZDhjMDc4ZGQ1OWYzMzMzMDc5MTkwOGFjYzEwNjllODUi.akQ70g.lO-3OwjPN05A2uZhzvNgB-o_7bI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -544,
+        -208
+      ],
+      "id": "f851b8e1-976f-4dd5-b58c-d9d1334c830b",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Script CORRIGIDO para extrair dados de produtos do HTML da Kalunga\n// Agora com o link correto para a página de detalhes do produto\n\nconst htmlContent = $input.item.json.data || $input.item.json;\n\nfunction extractProductData(html) {\n    const products = [];\n    \n    // Encontrar cada bloco de produto\n    const productBlocks = html.match(/<div class=\"blocoproduto[^\"]*\"[^>]*>[\\s\\S]*?<\\/div>\\s*<\\/div>\\s*<\\/div>\\s*<\\/div>/g) || [];\n    \n    if (productBlocks.length === 0) {\n        const altBlocks = html.match(/<div class=\"blocoproduto[^\"]*\"[^>]*>[\\s\\S]*?<\\/div>\\s*<\\/div>\\s*<\\/div>/g) || [];\n        if (altBlocks.length > 0) {\n            return extractFromBlocks(altBlocks);\n        }\n        return [];\n    }\n    \n    return extractFromBlocks(productBlocks);\n}\n\nfunction extractFromBlocks(blocks) {\n    const products = [];\n    \n    for (const block of blocks) {\n        try {\n            const product = {};\n            \n            // 1. LINK CORRETO DA PÁGINA DO PRODUTO\n            // Extrai o href do link que envolve a imagem ou título\n            let productUrl = null;\n            \n            // Primeiro tenta encontrar o link principal (geralmente envolve a imagem)\n            const linkMatches = block.match(/<a[^>]*href=\"([^\"]*)\"[^>]*class=\"blocoproduto__link[^\"]*\"[^>]*>/g);\n            if (linkMatches) {\n                for (const linkMatch of linkMatches) {\n                    const hrefMatch = linkMatch.match(/href=\"([^\"]*)\"/);\n                    if (hrefMatch) {\n                        const href = hrefMatch[1];\n                        // Pega o primeiro link que não seja vazio e contenha \"/prod/\"\n                        if (href && href.includes('/prod/')) {\n                            productUrl = href;\n                            break;\n                        }\n                    }\n                }\n            }\n            \n            // Se não encontrou, tenta um padrão alternativo\n            if (!productUrl) {\n                const simpleLink = block.match(/href=\"(\\/prod\\/[^\"]*)\"/);\n                if (simpleLink) {\n                    productUrl = simpleLink[1];\n                }\n            }\n            \n            if (productUrl) {\n                product.product_page_url = `https://www.kalunga.com.br${productUrl}`;\n                product.link = product.product_page_url;\n            }\n            \n            // 2. SKU e URL para adicionar ao carrinho\n            const buyButtonMatch = block.match(/<button[^>]*onclick=\"ComprarComGarantia\\('([^']*)'/);\n            if (buyButtonMatch) {\n                const sku = buyButtonMatch[1];\n                product.sku = sku;\n                product.add_to_cart_url = `https://www.kalunga.com.br/carrinho/adicionar/${sku}`;\n                product.buy_button_action = `ComprarComGarantia('${sku}')`;\n            } else {\n                // Tenta extrair SKU da URL do produto\n                if (productUrl) {\n                    const skuFromUrl = productUrl.match(/\\/([0-9]+)$/);\n                    if (skuFromUrl) {\n                        product.sku = skuFromUrl[1];\n                        product.add_to_cart_url = `https://www.kalunga.com.br/carrinho/adicionar/${skuFromUrl[1]}`;\n                    }\n                }\n            }\n            \n            // 3. Título/Descrição\n            const titleMatch = block.match(/<h2[^>]*class=\"blocoproduto__title[^\"]*\"[^>]*>([^<]*)<\\/h2>/);\n            if (titleMatch) {\n                product.title = titleMatch[1].trim();\n            } else {\n                const altTitle = block.match(/<a[^>]*class=\"blocoproduto__link[^\"]*\"[^>]*>[\\s\\S]*?<h2[^>]*>([^<]*)<\\/h2>/);\n                if (altTitle) {\n                    product.title = altTitle[1].trim();\n                }\n            }\n            \n            // 4. IMAGEM\n            const imgMatch = block.match(/<img[^>]*src=\"([^\"]*)\"[^>]*class=\"blocoproduto__image[^\"]*\"[^>]*>/);\n            if (imgMatch) {\n                product.image = imgMatch[1];\n            } else {\n                const sourceMatch = block.match(/<source[^>]*data-srcset=\"([^\"]*)\"[^>]*>/);\n                if (sourceMatch) {\n                    product.image = sourceMatch[1];\n                } else {\n                    const dataSrcMatch = block.match(/<img[^>]*data-src=\"([^\"]*)\"[^>]*>/);\n                    if (dataSrcMatch) {\n                        product.image = dataSrcMatch[1];\n                    }\n                }\n            }\n            \n            // 5. PREÇO À VISTA\n            const priceMatch = block.match(/<span[^>]*class=\"blocoproduto__text[^\"]*blocoproduto__price[^\"]*\"[^>]*>[\\s\\S]*?R\\$ ([0-9.,]+)/);\n            if (priceMatch) {\n                product.price_cash = parseFloat(priceMatch[1].replace(/\\./g, '').replace(',', '.'));\n                product.price_cash_formatted = `R$ ${priceMatch[1]}`;\n            }\n            \n            // 6. PREÇO PARCELADO\n            const installmentMatch = block.match(/<p[^>]*class=\"blocoproduto__text--bold blocoproduto__text--small mb-0\"[^>]*>([0-9]+)x de R\\$ ([0-9.,]+)/);\n            if (installmentMatch) {\n                product.installments = {\n                    times: parseInt(installmentMatch[1]),\n                    value: parseFloat(installmentMatch[2].replace(/\\./g, '').replace(',', '.')),\n                    formatted: `${installmentMatch[1]}x de R$ ${installmentMatch[2]}`\n                };\n            }\n            \n            // 7. PREÇO TOTAL A PRAZO\n            const totalMatch = block.match(/Total a prazo: R\\$ ([0-9.,]+)/);\n            if (totalMatch) {\n                product.price_total = parseFloat(totalMatch[1].replace(/\\./g, '').replace(',', '.'));\n                product.price_total_formatted = `R$ ${totalMatch[1]}`;\n            }\n            \n            // 8. FRETE GRÁTIS\n            const freightMatch = block.match(/<div[^>]*class=\"seloslot[^\"]*\"[^>]*>[\\s\\S]*?FRETE GRÁTIS/);\n            if (freightMatch) {\n                product.free_shipping = true;\n                \n                const regions = [];\n                const regionItems = block.match(/<li[^>]*id=\"([^\"]*)\"[^>]*>([^<]*)<\\/li>/g);\n                if (regionItems) {\n                    for (const item of regionItems) {\n                        const regionMatch = item.match(/<li[^>]*id=\"([^\"]*)\"[^>]*>([^<]*)<\\/li>/);\n                        if (regionMatch) {\n                            regions.push({\n                                id: regionMatch[1],\n                                name: regionMatch[2]\n                            });\n                        }\n                    }\n                }\n                product.free_shipping_regions = regions;\n                product.free_shipping_info = regions.map(r => r.name).join(', ');\n            } else {\n                product.free_shipping = false;\n                product.free_shipping_regions = [];\n                product.free_shipping_info = '';\n            }\n            \n            // 9. AVALIAÇÃO\n            const starsMatch = block.match(/<i[^>]*class=\"reviews__star_icon fa fa-star(?: text-warning)?\"[^>]*><\\/i>/g);\n            if (starsMatch) {\n                const activeStars = starsMatch.filter(s => s.includes('text-warning')).length;\n                product.rating = activeStars;\n                product.rating_max = 5;\n            }\n            \n            // 10. NÚMERO DE AVALIAÇÕES\n            const reviewsMatch = block.match(/<span[^>]*class=\"reviews__star_text[^\"]*\"[^>]*>\\(([0-9]+)\\)/);\n            if (reviewsMatch) {\n                product.reviews_count = parseInt(reviewsMatch[1]);\n            }\n            \n            // Adicionar apenas se tiver pelo menos título\n            if (product.title) {\n                products.push(product);\n            }\n            \n        } catch (error) {\n            console.log('Erro ao extrair bloco:', error);\n        }\n    }\n    \n    return products;\n}\n\nconst extractedProducts = extractProductData(htmlContent);\n\n// Montar resultado\nconst result = {\n    products: extractedProducts,\n    total_products_found: extractedProducts.length,\n    search_term: htmlContent.match(/<input[^>]*id=\"termoBuscado\"[^>]*value=\"([^\"]*)\"[^>]*>/)?.[1] || 'Não identificado',\n    extracted_at: new Date().toISOString()\n};\n\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -208
+      ],
+      "id": "0130219d-8393-401f-bf1e-0bcb164fa409",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "type": "random"
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        -464
+      ],
+      "id": "18fb90ad-974d-4140-87e2-86f48f92b689",
+      "name": "Sort",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -464
+      ],
+      "id": "d5006e9c-291a-4d1b-84af-27cda353b7b1",
+      "name": "Limit",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pesquisa-kalunga",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -912,
+        -112
+      ],
+      "id": "9a0e3747-c843-4971-9ea4-8f4d6e0b9223",
+      "name": "Webhook",
+      "webhookId": "7b123cec-732f-4331-9e8c-297a41be04d1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "0cbf03f8-9b8e-4500-b03a-71c92b202879",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-n8n.yg64ke.easypanel.host",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+            "content-length": "73",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+            "content-type": "application/json",
+            "origin": "https://site-kalunga.yg64ke.easypanel.host",
+            "priority": "u=1, i",
+            "referer": "https://site-kalunga.yg64ke.easypanel.host/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "x-forwarded-for": "187.29.65.190",
+            "x-forwarded-host": "n8n-n8n.yg64ke.easypanel.host",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "e934b40fb06d",
+            "x-real-ip": "187.29.65.190"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "query": "Cadeira de escritório",
+            "timestamp": "2026-07-01T14:47:30.158Z"
+          },
+          "webhookUrl": "https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-kalunga",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0917ef49-edb4-472f-8d68-b2bea0322d58",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0435f3002e081a7fea4f6b9d9fb69e6d66a9ce283c409f889ee2eb8cc504ae5a"
+  },
+  "id": "7oxlAtr6U0X0bc3A",
+  "tags": []
+}
