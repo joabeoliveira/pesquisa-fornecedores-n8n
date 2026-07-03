@@ -27,11 +27,12 @@ Deploy no GitHub Pages
 
 Observações
 
-- O seletor de fonte permite alternar entre Kalunga, Boa Dica, Americanas, Casas Bahia, Ponto Frio e Magalu.
-- A Boa Dica busca varias paginas quando `maxPages` e enviado no corpo do webhook, limitado a 5 paginas por execucao.
+- Agora a busca consulta **Kalunga, Boa Dica e Americanas simultaneamente** com uma só pesquisa.
+- Cada produto exibe um **badge colorido** indicando de qual marketplace veio.
+- Indicadores visuais mostram o status de cada fornecedor (⏳ carregando, ✅ concluído, ❌ erro).
+- A Boa Dica busca várias páginas quando `maxPages` é enviado no corpo do webhook, limitado a 5 páginas por execução.
 - A Americanas usa o endpoint GraphQL do Fast Store, então cookie e CSRF do navegador podem ser úteis quando o retorno vier vazio.
-- O botão "Comprar" foi removido — permanece apenas "Ver Produto".
-- Os produtos são ordenados por preço (menor para maior) antes de exibidos.
+- Todos os produtos são mesclados e ordenados por preço (menor para maior) independente da fonte.
 
 Licença
 

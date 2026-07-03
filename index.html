@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesquisa Kalunga - MVP</title>
+    <title>Pesquisa Multi-Fornecedor - MVP</title>
     <style>
         * {
             margin: 0;
@@ -185,6 +185,7 @@
             line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             min-height: 40px;
@@ -309,6 +310,78 @@
             margin-bottom: 8px;
         }
 
+        /* Per-source status indicators */
+        .per-source-status {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .source-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            background: #f5f5f5;
+            transition: all 0.3s;
+        }
+
+        .source-status.loading {
+            background: #fff8e1;
+        }
+
+        .source-status.done {
+            background: #e8f5e9;
+        }
+
+        .source-status.error {
+            background: #ffebee;
+        }
+
+        .source-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #e0e0e0;
+            transition: background 0.3s;
+        }
+
+        .source-count {
+            font-size: 12px;
+            color: #757575;
+            margin-left: 2px;
+        }
+
+        /* Source badge on product card */
+        .product-source {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .product-source[data-source="kalunga"] {
+            background: #1565c0;
+        }
+
+        .product-source[data-source="boadica"] {
+            background: #2e7d32;
+        }
+
+        .product-source[data-source="americanas"] {
+            background: #c62828;
+        }
+
         @media (max-width: 600px) {
             .header {
                 padding: 20px;
@@ -322,17 +395,17 @@
                 min-width: 100%;
             }
 
-            .source-picker {
-                align-items: stretch;
-            }
-
-            .source-picker select {
-                width: 100%;
-                min-width: 100%;
-            }
-
             .search-form button {
                 width: 100%;
+            }
+
+            .per-source-status {
+                gap: 6px;
+            }
+
+            .source-status {
+                font-size: 12px;
+                padding: 4px 10px;
             }
 
             .results {
@@ -345,23 +418,12 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🔍 Pesquisa Kalunga</h1>
-            <p>Encontre produtos e compare preços em tempo real</p>
+            <h1>🔍 Pesquisa Multi-Fornecedor</h1>
+            <p>Busque em Kalunga, Boa Dica e Americanas simultaneamente</p>
         </div>
 
         <!-- Search -->
         <div class="search-box">
-            <div class="source-picker">
-                <label for="sourceSelect">Fonte</label>
-                <select id="sourceSelect" aria-label="Selecionar fornecedor">
-                    <option value="kalunga">Kalunga</option>
-                    <option value="boadica">Boa Dica</option>
-                    <option value="americanas">Americanas</option>
-                    <option value="casasbahia">Casas Bahia</option>
-                    <option value="pontofrio">Ponto Frio</option>
-                    <option value="magalu">Magalu</option>
-                </select>
-            </div>
             <form class="search-form" id="searchForm">
                 <input 
                     type="text" 
@@ -374,6 +436,23 @@
                     🔍 Pesquisar
                 </button>
             </form>
+            <div id="perSourceStatus" class="per-source-status">
+                <div class="source-status" data-source="kalunga">
+                    <span class="source-indicator" id="indicator-kalunga"></span>
+                    <span>Kalunga</span>
+                    <span class="source-count" id="count-kalunga"></span>
+                </div>
+                <div class="source-status" data-source="boadica">
+                    <span class="source-indicator" id="indicator-boadica"></span>
+                    <span>Boa Dica</span>
+                    <span class="source-count" id="count-boadica"></span>
+                </div>
+                <div class="source-status" data-source="americanas">
+                    <span class="source-indicator" id="indicator-americanas"></span>
+                    <span>Americanas</span>
+                    <span class="source-count" id="count-americanas"></span>
+                </div>
+            </div>
             <div id="status" class="status"></div>
         </div>
 
@@ -407,27 +486,18 @@
             magalu: 'Magalu',
         };
 
+        // Fontes ativas (que funcionam)
+        const ACTIVE_SOURCES = ['kalunga', 'boadica', 'americanas'];
+
         // Elementos DOM
-        const sourceSelect = document.getElementById('sourceSelect');
         const searchForm = document.getElementById('searchForm');
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
         const statusDiv = document.getElementById('status');
         const resultsContainer = document.getElementById('resultsContainer');
 
-        function getSelectedSource() {
-            return sourceSelect?.value || 'kalunga';
-        }
+        // --- Utilitários ---
 
-        function getSourceLabel(sourceKey) {
-            return SOURCE_LABELS[sourceKey] || SOURCE_LABELS.kalunga;
-        }
-
-        function getWebhookUrl(sourceKey) {
-            return WEBHOOK_URLS[sourceKey] || WEBHOOK_URLS.kalunga;
-        }
-
-        // Função para mostrar status
         function showStatus(message, type) {
             statusDiv.textContent = message;
             statusDiv.className = `status ${type}`;
@@ -438,212 +508,249 @@
             statusDiv.textContent = '';
         }
 
-        // Função para renderizar produtos
-        function renderProducts(data) {
-            if (!data.products || data.products.length === 0) {
+        function parseFormattedPrice(str) {
+            if (!str) return Infinity;
+            try {
+                let s = String(str).replace(/[^0-9,\.]/g, '').trim();
+                if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
+                    s = s.replace(/\./g, '').replace(',', '.');
+                } else if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
+                    s = s.replace(',', '.');
+                }
+                const v = parseFloat(s);
+                return Number.isFinite(v) ? v : Infinity;
+            } catch (e) {
+                return Infinity;
+            }
+        }
+
+        function getProductPrice(p) {
+            if (p.price !== undefined && typeof p.price === 'number') return p.price;
+            if (p.price_value !== undefined && typeof p.price_value === 'number') return p.price_value;
+            if (p.price_float !== undefined && typeof p.price_float === 'number') return p.price_float;
+            if (p.price_cash !== undefined && typeof p.price_cash === 'number') return p.price_cash;
+            if (p.price_cash_value !== undefined && typeof p.price_cash_value === 'number') return p.price_cash_value;
+            if (p.price_cash_formatted) return parseFormattedPrice(p.price_cash_formatted);
+            if (p.price_total_formatted) return parseFormattedPrice(p.price_total_formatted);
+            if (p.price_formatted) return parseFormattedPrice(p.price_formatted);
+            return Infinity;
+        }
+
+        // --- Indicadores por fonte ---
+
+        function updateSourceIndicator(source, state, count) {
+            const indicator = document.getElementById(`indicator-${source}`);
+            const countEl = document.getElementById(`count-${source}`);
+            const statusEl = indicator?.closest('.source-status');
+            if (!indicator) return;
+
+            statusEl?.classList.remove('waiting', 'loading', 'done', 'error');
+
+            if (state === 'waiting') {
+                indicator.style.background = '#e0e0e0';
+                if (countEl) countEl.textContent = '';
+            } else if (state === 'loading') {
+                indicator.style.background = '#ffa000';
+                if (countEl) countEl.textContent = '⏳';
+            } else if (state === 'done') {
+                indicator.style.background = '#2e7d32';
+                if (countEl) countEl.textContent = `✅ ${count} itens`;
+            } else if (state === 'error') {
+                indicator.style.background = '#c62828';
+                if (countEl) countEl.textContent = '❌';
+            }
+        }
+
+        function resetAllIndicators() {
+            ACTIVE_SOURCES.forEach(s => updateSourceIndicator(s, 'waiting'));
+        }
+
+        // --- Renderização ---
+
+        function renderProductCard(product) {
+            const sourceLabel = product._source_label || SOURCE_LABELS[product._source] || 'Desconhecido';
+            const sourceKey = product._source || '';
+
+            const starsHtml = product.rating
+                ? '⭐'.repeat(product.rating) + '☆'.repeat(5 - product.rating)
+                : '⭐'.repeat(5);
+
+            const shippingHtml = product.free_shipping
+                ? '<span class="product-shipping free">🚚 Frete Grátis</span>'
+                : '<span class="product-shipping paid">💰 Frete não informado</span>';
+
+            const installmentsHtml = product.installments
+                ? `<div class="product-installments">${product.installments.formatted}</div>` : '';
+
+            const totalHtml = product.price_total_formatted
+                ? `<div class="product-total">Total a prazo: ${product.price_total_formatted}</div>` : '';
+
+            const ratingHtml = product.reviews_count !== undefined
+                ? `<div class="product-rating">${starsHtml} <span>(${product.reviews_count} avaliações)</span></div>` : '';
+
+            return `
+                <div class="product-card">
+                    <img
+                        class="product-image"
+                        src="${product.image || 'https://via.placeholder.com/200x200/eeeeee/999?text=Sem+Imagem'}"
+                        alt="${product.title || 'Produto'}"
+                        loading="lazy"
+                        onerror="this.src='https://via.placeholder.com/200x200/eeeeee/999?text=Sem+Imagem'"
+                    >
+                    <div class="product-info">
+                        <div class="product-source" data-source="${sourceKey}">${sourceLabel}</div>
+                        <div class="product-title">
+                            <a href="${product.product_page_url || '#'}" target="_blank">
+                                ${product.title || 'Produto sem título'}
+                            </a>
+                        </div>
+                        ${ratingHtml}
+                        <div class="product-price">${product.price_cash_formatted || 'Preço indisponível'}</div>
+                        ${installmentsHtml}
+                        ${totalHtml}
+                        ${shippingHtml}
+                        <div class="product-actions">
+                            <a href="${product.product_page_url || '#'}" target="_blank" class="btn-detail">Ver Produto</a>
+                        </div>
+                        ${product.sku ? `<small style="color: #999; display: block; margin-top: 8px;">SKU: ${product.sku}</small>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCombinedResults(allProducts, searchTerm, sourceSummary) {
+            if (allProducts.length === 0) {
                 resultsContainer.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">🔍</div>
                         <h3>Nenhum produto encontrado</h3>
                         <p>Tente usar termos diferentes na busca</p>
-                        <small style="color: #999;">Termo pesquisado: "${data.search_term || 'N/A'}"</small>
+                        <small style="color: #999;">Termo pesquisado: "${searchTerm}"</small>
+                        <div style="margin-top: 12px; font-size: 13px; color: #757575;">
+                            ${sourceSummary.join(' • ')}
+                        </div>
                     </div>
                 `;
                 return;
             }
 
-            // Mostrar estatísticas
-            const sourceLabel = data.source_name || getSourceLabel(data.source || getSelectedSource());
+            // Ordenar por preço (menor para maior)
+            const sorted = allProducts.slice().sort((a, b) => getProductPrice(a) - getProductPrice(b));
+
             const statsHtml = `
                 <div class="stats">
-                    Fonte: <strong>${sourceLabel}</strong> • 
-                    🔍 <strong>${data.total_products_found}</strong> produtos encontrados para 
-                    "<strong>${data.search_term}</strong>" 
-                    • Atualizado em ${new Date(data.extracted_at).toLocaleString('pt-BR')}
+                    🏪 ${sourceSummary.join(' • ')}
+                    &nbsp;• Total: <strong>${allProducts.length}</strong> produtos para "<strong>${searchTerm}</strong>"
                 </div>
             `;
 
-            // Ordenar produtos por preço (menor para maior) antes de renderizar
-            function parseFormattedPrice(str) {
-                if (!str) return Infinity;
-                try {
-                    // Remove currency symbols and espaços
-                    let s = String(str).replace(/[^0-9,\.]/g, '').trim();
-                    // Separe milhares e decimais (suporta formatos BR e EN)
-                    if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
-                        // Ex: 1.234,56 -> remove pontuação de milhares
-                        s = s.replace(/\./g, '').replace(',', '.');
-                    } else if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
-                        // Ex: 1234,56 -> troca vírgula por ponto
-                        s = s.replace(',', '.');
-                    } else {
-                        // Ex: 1234.56 ou 1234 -> já ok
-                    }
-                    const v = parseFloat(s);
-                    return Number.isFinite(v) ? v : Infinity;
-                } catch (e) {
-                    return Infinity;
-                }
-            }
-
-            function getProductPrice(p) {
-                // Tenta campos numéricos conhecidos
-                if (p.price !== undefined && typeof p.price === 'number') return p.price;
-                if (p.price_value !== undefined && typeof p.price_value === 'number') return p.price_value;
-                if (p.price_float !== undefined && typeof p.price_float === 'number') return p.price_float;
-                if (p.price_cash !== undefined && typeof p.price_cash === 'number') return p.price_cash;
-                if (p.price_cash_value !== undefined && typeof p.price_cash_value === 'number') return p.price_cash_value;
-                // Tenta campos formatados (strings)
-                if (p.price_cash_formatted) return parseFormattedPrice(p.price_cash_formatted);
-                if (p.price_total_formatted) return parseFormattedPrice(p.price_total_formatted);
-                if (p.price_formatted) return parseFormattedPrice(p.price_formatted);
-                // fallback para Infinity (coloca no fim)
-                return Infinity;
-            }
-
-            // Criar cópia e ordenar
-            const sortedProducts = data.products.slice().sort((a, b) => getProductPrice(a) - getProductPrice(b));
-
-            // Renderizar cards
-            const productsHtml = sortedProducts.map(product => {
-                const starsHtml = product.rating ? 
-                    '⭐'.repeat(product.rating) + '☆'.repeat(5 - product.rating) : 
-                    '⭐'.repeat(5);
-
-                const shippingHtml = product.free_shipping ? 
-                    `<span class="product-shipping free">🚚 Frete Grátis</span>` : 
-                    `<span class="product-shipping paid">💰 Frete não informado</span>`;
-
-                const installmentsHtml = product.installments ? 
-                    `<div class="product-installments">${product.installments.formatted}</div>` : '';
-
-                const totalHtml = product.price_total_formatted ? 
-                    `<div class="product-total">Total a prazo: ${product.price_total_formatted}</div>` : '';
-
-                const ratingHtml = product.reviews_count !== undefined ? 
-                    `<div class="product-rating">${starsHtml} <span>(${product.reviews_count} avaliações)</span></div>` : '';
-
-                return `
-                    <div class="product-card">
-                        <img 
-                            class="product-image" 
-                            src="${product.image || 'https://via.placeholder.com/200x200/eeeeee/999?text=Sem+Imagem'}" 
-                            alt="${product.title || 'Produto'}"
-                            loading="lazy"
-                            onerror="this.src='https://via.placeholder.com/200x200/eeeeee/999?text=Sem+Imagem'"
-                        >
-                        <div class="product-info">
-                            <div class="product-title">
-                                <a href="${product.product_page_url || '#'}" target="_blank">
-                                    ${product.title || 'Produto sem título'}
-                                </a>
-                            </div>
-                            ${ratingHtml}
-                            <div class="product-price">${product.price_cash_formatted || 'Preço indisponível'}</div>
-                            ${installmentsHtml}
-                            ${totalHtml}
-                            ${shippingHtml}
-                            <div class="product-actions">
-                                <a href="${product.product_page_url || '#'}" target="_blank" class="btn-detail">Ver Produto</a>
-                            </div>
-                            ${product.sku ? `<small style="color: #999; display: block; margin-top: 8px;">SKU: ${product.sku}</small>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            resultsContainer.innerHTML = statsHtml + `<div class="results">${productsHtml}</div>`;
+            const cardsHtml = sorted.map(renderProductCard).join('');
+            resultsContainer.innerHTML = statsHtml + `<div class="results">${cardsHtml}</div>`;
         }
 
-        // Função para pesquisar
+        // --- Pesquisa multi-fornecedor ---
+
         async function searchProduct(query) {
             if (!query.trim()) {
                 showStatus('Por favor, digite um termo para pesquisar.', 'error');
                 return;
             }
 
-            const source = getSelectedSource();
-            const webhookUrl = getWebhookUrl(source);
-
-            // Reset
             hideStatus();
             searchButton.disabled = true;
             searchButton.textContent = '⏳ Pesquisando...';
-            showStatus(`🔍 Buscando por "${query}" na ${getSourceLabel(source)}...`, 'loading');
+            resetAllIndicators();
 
-            try {
-                const response = await fetch(webhookUrl, {
+            // Marcar todas como "carregando"
+            ACTIVE_SOURCES.forEach(s => updateSourceIndicator(s, 'loading'));
+
+            // Disparar requisições em paralelo
+            const requests = ACTIVE_SOURCES.map(source =>
+                fetch(WEBHOOK_URLS[source], {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         query: query.trim(),
                         source,
                         timestamp: new Date().toISOString()
                     })
-                });
+                })
+                .then(async res => {
+                    if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
+                    const data = await res.json();
+                    return { source, data, ok: true };
+                })
+                .catch(error => {
+                    return { source, error: error.message, ok: false };
+                })
+            );
 
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
+            const results = await Promise.all(requests);
 
-                const data = await response.json();
-                
-                // Esconder status de loading
-                hideStatus();
+            // Processar resultados
+            let allProducts = [];
+            let sourceSummary = [];
 
-                if (data && data.source_status === 'blocked') {
-                    showStatus(`⚠️ ${data.source_name || getSourceLabel(source)}: ${data.warning || 'Fonte temporariamente indisponível.'}`, 'error');
-                    resultsContainer.innerHTML = `
-                        <div class="empty-state">
-                            <div class="icon">⚠️</div>
-                            <h3>${data.source_name || getSourceLabel(source)} indisponível para automação</h3>
-                            <p>${data.warning || 'A fonte respondeu, mas não retornou produtos utilizáveis.'}</p>
-                        </div>
-                    `;
-                    return;
-                }
+            results.forEach(result => {
+                const label = SOURCE_LABELS[result.source] || result.source;
 
-                // Verificar se veio dados
-                if (data && data.products !== undefined) {
-                    showStatus(`✅ ${data.total_products_found || 0} produtos encontrados na ${getSourceLabel(source)}`, 'success');
-                    renderProducts(data);
+                if (result.ok && result.data && result.data.products && result.data.products.length > 0) {
+                    const count = result.data.products.length;
+                    updateSourceIndicator(result.source, 'done', count);
+                    sourceSummary.push(`${label}: ${count}`);
+
+                    // Marcar cada produto com sua origem
+                    result.data.products.forEach(p => {
+                        p._source = result.source;
+                        p._source_label = result.data.source_name || label;
+                    });
+                    allProducts = allProducts.concat(result.data.products);
+
+                } else if (result.ok && result.data && result.data.source_status === 'blocked') {
+                    updateSourceIndicator(result.source, 'error');
+                    sourceSummary.push(`${label}: bloqueado`);
+                } else if (result.ok && result.data && result.data.products && result.data.products.length === 0) {
+                    updateSourceIndicator(result.source, 'done', 0);
+                    sourceSummary.push(`${label}: 0`);
                 } else {
-                    showStatus('⚠️ Resposta inesperada da API', 'error');
-                    console.error('Resposta inesperada:', data);
+                    updateSourceIndicator(result.source, 'error');
+                    sourceSummary.push(`${label}: erro`);
                 }
+            });
 
-            } catch (error) {
-                console.error('Erro na pesquisa:', error);
-                showStatus(`❌ Erro ao pesquisar: ${error.message}`, 'error');
-                resultsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon">❌</div>
-                        <h3>Erro na pesquisa</h3>
-                        <p>${error.message}</p>
-                        <small style="color: #999;">Verifique o console para mais detalhes</small>
-                    </div>
-                `;
-            } finally {
-                searchButton.disabled = false;
-                searchButton.textContent = '🔍 Pesquisar';
-                // Esconder status após 5 segundos se for sucesso
-                setTimeout(() => {
-                    if (statusDiv.className.includes('success')) {
-                        hideStatus();
-                    }
-                }, 5000);
+            hideStatus();
+
+            // Resumo geral
+            if (allProducts.length > 0) {
+                showStatus(`✅ ${allProducts.length} produtos encontrados no total`, 'success');
+            } else {
+                const hasAnyError = results.some(r => !r.ok || r.data?.source_status === 'blocked');
+                if (hasAnyError) {
+                    showStatus('⚠️ Nenhum produto encontrado (verifique os indicadores)', 'error');
+                } else {
+                    showStatus('🔍 Nenhum produto encontrado', 'error');
+                }
             }
+
+            renderCombinedResults(allProducts, query.trim(), sourceSummary);
+
+            searchButton.disabled = false;
+            searchButton.textContent = '🔍 Pesquisar';
+
+            setTimeout(() => {
+                if (statusDiv.className.includes('success')) {
+                    hideStatus();
+                }
+            }, 5000);
         }
 
-        // Event Listeners
+        // --- Event Listeners ---
+
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             searchProduct(searchInput.value);
         });
 
-        // Suporte para pesquisa com Enter
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -651,24 +758,15 @@
             }
         });
 
-        // Pesquisar automaticamente se houver parâmetro na URL
+        // Pesquisar automaticamente se houver parâmetro ?q= na URL
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const query = params.get('q');
-            const source = params.get('source');
-
-            if (source && WEBHOOK_URLS[source]) {
-                sourceSelect.value = source;
-            }
-
             if (query) {
                 searchInput.value = query;
                 searchProduct(query);
             }
         });
-
-        console.log('🚀 MVP multi-fornecedor pronto!');
-        console.log(`📡 Webhooks: ${Object.values(WEBHOOK_URLS).join(', ')}`);
     </script>
 </body>
 </html>
