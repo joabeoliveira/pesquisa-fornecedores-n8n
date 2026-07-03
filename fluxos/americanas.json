@@ -1,0 +1,167 @@
+{
+  "name": "Pesquisa de produtos Americanas",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -304
+      ],
+      "id": "f4a5b9db-6e6a-4ad8-b3f4-0f72f9f8b001",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pesquisa-americanas",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -912,
+        -112
+      ],
+      "id": "4d5c0f7f-bbde-4e78-bf0f-2c57d2d5f002",
+      "name": "Webhook",
+      "webhookId": "a6c5af26-8e4a-4f05-a5dd-4d0a3a20d003"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.americanas.com.br/api/graphql?operationName=ClientManyProductsQuery&operationHash=ebf3aabc70af9a8d596ba4d0fb08eda6c2b1f428&variables=' + encodeURIComponent(JSON.stringify({ first: 12, after: '0', sort: 'score_desc', term: $json.body.query || '', selectedFacets: [{ key: 'channel', value: '{\\\"salesChannel\\\":1,\\\"regionId\\\":\\\"\\\"}' }, { key: 'locale', value: 'pt-BR' }], sponsoredCount: 3 })) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json, text/plain, */*"
+            },
+            {
+              "name": "accept-language",
+              "value": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "referer",
+              "value": "https://www.americanas.com.br/"
+            },
+            {
+              "name": "origin",
+              "value": "https://www.americanas.com.br"
+            },
+            {
+              "name": "cookie",
+              "value": "={{ $json.headers?.cookie || $json.body.cookie || \"\" }}"
+            },
+            {
+              "name": "x-csrf-token",
+              "value": "={{ $json.headers?.[\"x-csrf-token\"] || $json.body.csrfToken || \"\" }}"
+            }
+          ]
+        },
+        "options": {
+          "followRedirect": true,
+          "timeout": 60000
+        },
+        "httpMethod": "GET"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -544,
+        -208
+      ],
+      "id": "8b1e7d02-6d39-4f6f-81c9-8d3bc4c6f004",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $input.item.json;\nconst root = payload?.data ?? payload;\n\nfunction firstString(...values) {\n  for (const value of values) {\n    if (typeof value === 'string' && value.trim()) return value.trim();\n  }\n  return null;\n}\n\nfunction toAbsoluteUrl(url) {\n  if (!url || typeof url !== 'string') return null;\n  if (url.startsWith('http://') || url.startsWith('https://')) return url;\n  if (url.startsWith('//')) return `https:${url}`;\n  if (url.startsWith('/')) return `https://www.americanas.com.br${url}`;\n  return `https://www.americanas.com.br/${url.slice(1)}`;\n}\n\nfunction toImageUrl(node) {\n  const image = node.image || node.imageUrl || node.thumbnail || node.media || node.pictures;\n  if (typeof image === 'string') return toAbsoluteUrl(image);\n  if (Array.isArray(image) && image.length > 0) {\n    const first = image[0];\n    if (typeof first === 'string') return toAbsoluteUrl(first);\n    if (first && typeof first === 'object') return toAbsoluteUrl(first.url || first.src || first.imageUrl || first.thumb);\n  }\n  if (image && typeof image === 'object') {\n    return toAbsoluteUrl(image.url || image.src || image.imageUrl || image.thumb);\n  }\n  return null;\n}\n\nfunction resolvePrice(node) {\n  const candidates = [\n    node.salePrice,\n    node.price,\n    node.listPrice,\n    node.offerPrice,\n    node.currentPrice,\n    node.lowPrice,\n    node.highPrice,\n    node.offers?.price,\n    node.offers?.lowPrice,\n    node.offers?.highPrice,\n    node.priceRange?.sellingPrice?.lowPrice,\n    node.priceRange?.sellingPrice?.highPrice,\n    node.priceRange?.listPrice?.lowPrice,\n    node.priceRange?.listPrice?.highPrice,\n  ];\n\n  for (const value of candidates) {\n    const numeric = typeof value === 'number' ? value : Number(value);\n    if (Number.isFinite(numeric) && numeric > 0) return numeric;\n  }\n\n  return null;\n}\n\nfunction resolveFreeShipping(node) {\n  const candidates = [\n    node.free_shipping,\n    node.freeShipping,\n    node.hasFreeShipping,\n    node.shipping?.free,\n    node.shipping?.freeShipping,\n    node.shippingInfo?.freeShipping,\n    node.logistics?.freeShipping,\n  ];\n\n  for (const value of candidates) {\n    if (typeof value === 'boolean') return value;\n    if (typeof value === 'string') {\n      const normalized = value.trim().toLowerCase();\n      if (['true', 'sim', 'yes'].includes(normalized)) return true;\n      if (['false', 'nao', 'não', 'no'].includes(normalized)) return false;\n    }\n  }\n\n  return null;\n}\n\nfunction normalizeProduct(node) {\n  const title = firstString(node.name, node.title, node.productName, node.shortName);\n  if (!title) return null;\n\n  const link = toAbsoluteUrl(node.url || node.href || node.link || node.slug || node.productUrl || node.canonicalUrl);\n  const price = resolvePrice(node);\n  const image = toImageUrl(node);\n  const brand = firstString(node.brand?.name, node.brand, node.manufacturer, node.seller?.name);\n  const sku = firstString(node.sku, node.id, node.productId, node.referenceId, node.itemId);\n  const freeShipping = resolveFreeShipping(node);\n\n  return {\n    title,\n    product_page_url: link,\n    link,\n    image,\n    sku,\n    brand,\n    source: 'americanas',\n    source_name: 'Americanas',\n    price_cash: price,\n    price_cash_formatted: price ? `R$ ${price.toFixed(2).replace('.', ',')}` : null,\n    free_shipping: freeShipping,\n    shipping_note: freeShipping === true ? 'Frete grátis' : freeShipping === false ? 'Frete não informado' : 'Consulte o frete no link',\n  };\n}\n\nfunction walk(node, acc, seen) {\n  if (!node || typeof node !== 'object') return;\n  if (seen.has(node)) return;\n  seen.add(node);\n\n  if (Array.isArray(node)) {\n    for (const item of node) walk(item, acc, seen);\n    return;\n  }\n\n  if (node.node && typeof node.node === 'object') {\n    walk(node.node, acc, seen);\n  }\n\n  const hasName = typeof node.name === 'string' || typeof node.title === 'string' || typeof node.productName === 'string';\n  const hasCommercialData = node.price != null || node.salePrice != null || node.listPrice != null || node.priceRange || node.offers || node.images || node.image || node.url || node.href || node.slug || node.link;\n\n  if (hasName && hasCommercialData) {\n    acc.push(node);\n  }\n\n  for (const value of Object.values(node)) {\n    walk(value, acc, seen);\n  }\n}\n\nconst collected = [];\nwalk(root, collected, new Set());\n\nconst normalized = [];\nconst dedupe = new Set();\nfor (const candidate of collected) {\n  const product = normalizeProduct(candidate);\n  if (!product) continue;\n  const key = `${product.title}|${product.product_page_url || ''}|${product.sku || ''}`;\n  if (dedupe.has(key)) continue;\n  dedupe.add(key);\n  normalized.push(product);\n}\n\nnormalized.sort((a, b) => {\n  const priceA = Number.isFinite(a.price_cash) ? a.price_cash : Number.POSITIVE_INFINITY;\n  const priceB = Number.isFinite(b.price_cash) ? b.price_cash : Number.POSITIVE_INFINITY;\n  return priceA - priceB;\n});\n\nconst searchTerm = payload?.variables?.term || payload?.data?.search?.term || payload?.data?.search?.query || payload?.term || 'Não identificado';\nconst hasErrors = Array.isArray(payload?.errors) && payload.errors.length > 0;\n\nreturn [{\n  json: {\n    products: normalized,\n    total_products_found: normalized.length,\n    search_term: searchTerm,\n    source: 'americanas',\n    source_name: 'Americanas',\n    source_status: hasErrors ? 'blocked' : 'ok',\n    source_notes: hasErrors ? 'GraphQL respondeu com erro; valide cookie e CSRF funcionais do navegador.' : 'Consulta GraphQL extraída do DevTools.',\n    extracted_at: new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        -208
+      ],
+      "id": "cfc6c2d9-7b21-4f53-8c0e-8c01a1bf5005",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "a0a5cbf2-78e7-4ef5-b02e-847d8d6b9006",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2f5f3a9b-8d64-4b8a-a6ad-ff4e3a0f6001",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0435f3002e081a7fea4f6b9d9fb69e6d66a9ce283c409f889ee2eb8cc504ae5a"
+  },
+  "id": "americanas-flow",
+  "tags": []
+}

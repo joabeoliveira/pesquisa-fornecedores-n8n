@@ -56,6 +56,35 @@
             flex-wrap: wrap;
         }
 
+        .source-picker {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .source-picker label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #455a64;
+        }
+
+        .source-picker select {
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #fff;
+            color: #263238;
+            min-width: 190px;
+        }
+
+        .source-picker select:focus {
+            outline: none;
+            border-color: #0d47a1;
+        }
+
         .search-form input {
             flex: 1;
             min-width: 200px;
@@ -293,6 +322,15 @@
                 min-width: 100%;
             }
 
+            .source-picker {
+                align-items: stretch;
+            }
+
+            .source-picker select {
+                width: 100%;
+                min-width: 100%;
+            }
+
             .search-form button {
                 width: 100%;
             }
@@ -313,6 +351,17 @@
 
         <!-- Search -->
         <div class="search-box">
+            <div class="source-picker">
+                <label for="sourceSelect">Fonte</label>
+                <select id="sourceSelect" aria-label="Selecionar fornecedor">
+                    <option value="kalunga">Kalunga</option>
+                    <option value="boadica">Boa Dica</option>
+                    <option value="americanas">Americanas</option>
+                    <option value="casasbahia">Casas Bahia</option>
+                    <option value="pontofrio">Ponto Frio</option>
+                    <option value="magalu">Magalu</option>
+                </select>
+            </div>
             <form class="search-form" id="searchForm">
                 <input 
                     type="text" 
@@ -339,15 +388,44 @@
     </div>
 
     <script>
-        // URL do webhook do n8n
-        const WEBHOOK_URL = 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-kalunga';
+        // Webhooks do n8n por fornecedor
+        const WEBHOOK_URLS = {
+            kalunga: 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-kalunga',
+            boadica: 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-boadica',
+            americanas: 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-americanas',
+            casasbahia: 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-casasbahia',
+            pontofrio: 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-pontofrio',
+            magalu: 'https://n8n-n8n.yg64ke.easypanel.host/webhook/pesquisa-magalu',
+        };
+
+        const SOURCE_LABELS = {
+            kalunga: 'Kalunga',
+            boadica: 'Boa Dica',
+            americanas: 'Americanas',
+            casasbahia: 'Casas Bahia',
+            pontofrio: 'Ponto Frio',
+            magalu: 'Magalu',
+        };
 
         // Elementos DOM
+        const sourceSelect = document.getElementById('sourceSelect');
         const searchForm = document.getElementById('searchForm');
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
         const statusDiv = document.getElementById('status');
         const resultsContainer = document.getElementById('resultsContainer');
+
+        function getSelectedSource() {
+            return sourceSelect?.value || 'kalunga';
+        }
+
+        function getSourceLabel(sourceKey) {
+            return SOURCE_LABELS[sourceKey] || SOURCE_LABELS.kalunga;
+        }
+
+        function getWebhookUrl(sourceKey) {
+            return WEBHOOK_URLS[sourceKey] || WEBHOOK_URLS.kalunga;
+        }
 
         // Função para mostrar status
         function showStatus(message, type) {
@@ -375,8 +453,10 @@
             }
 
             // Mostrar estatísticas
+            const sourceLabel = data.source_name || getSourceLabel(data.source || getSelectedSource());
             const statsHtml = `
                 <div class="stats">
+                    Fonte: <strong>${sourceLabel}</strong> • 
                     🔍 <strong>${data.total_products_found}</strong> produtos encontrados para 
                     "<strong>${data.search_term}</strong>" 
                     • Atualizado em ${new Date(data.extracted_at).toLocaleString('pt-BR')}
@@ -482,20 +562,24 @@
                 return;
             }
 
+            const source = getSelectedSource();
+            const webhookUrl = getWebhookUrl(source);
+
             // Reset
             hideStatus();
             searchButton.disabled = true;
             searchButton.textContent = '⏳ Pesquisando...';
-            showStatus(`🔍 Buscando por "${query}"...`, 'loading');
+            showStatus(`🔍 Buscando por "${query}" na ${getSourceLabel(source)}...`, 'loading');
 
             try {
-                const response = await fetch(WEBHOOK_URL, {
+                const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         query: query.trim(),
+                        source,
                         timestamp: new Date().toISOString()
                     })
                 });
@@ -509,9 +593,21 @@
                 // Esconder status de loading
                 hideStatus();
 
+                if (data && data.source_status === 'blocked') {
+                    showStatus(`⚠️ ${data.source_name || getSourceLabel(source)}: ${data.warning || 'Fonte temporariamente indisponível.'}`, 'error');
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">⚠️</div>
+                            <h3>${data.source_name || getSourceLabel(source)} indisponível para automação</h3>
+                            <p>${data.warning || 'A fonte respondeu, mas não retornou produtos utilizáveis.'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
                 // Verificar se veio dados
                 if (data && data.products !== undefined) {
-                    showStatus(`✅ ${data.total_products_found || 0} produtos encontrados`, 'success');
+                    showStatus(`✅ ${data.total_products_found || 0} produtos encontrados na ${getSourceLabel(source)}`, 'success');
                     renderProducts(data);
                 } else {
                     showStatus('⚠️ Resposta inesperada da API', 'error');
@@ -559,14 +655,20 @@
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const query = params.get('q');
+            const source = params.get('source');
+
+            if (source && WEBHOOK_URLS[source]) {
+                sourceSelect.value = source;
+            }
+
             if (query) {
                 searchInput.value = query;
                 searchProduct(query);
             }
         });
 
-        console.log('🚀 MVP Kalunga pesquisar pronto!');
-        console.log(`📡 Webhook: ${WEBHOOK_URL}`);
+        console.log('🚀 MVP multi-fornecedor pronto!');
+        console.log(`📡 Webhooks: ${Object.values(WEBHOOK_URLS).join(', ')}`);
     </script>
 </body>
 </html>

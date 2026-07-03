@@ -1,0 +1,105 @@
+{
+  "name": "Pesquisa de produtos Ponto Frio",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -304
+      ],
+      "id": "pf1d1d1f-7a5f-4f58-bf7c-1f0b0fbd2001",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pesquisa-pontofrio",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -912,
+        -112
+      ],
+      "id": "pf1d1d1f-7a5f-4f58-bf7c-1f0b0fbd2002",
+      "name": "Webhook",
+      "webhookId": "pf1d1d1f-7a5f-4f58-bf7c-1f0b0fbd2003"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $json.body?.query || '';\n\nreturn [{\n  json: {\n    products: [],\n    total_products_found: 0,\n    search_term: query || 'Não identificado',\n    source: 'pontofrio',\n    source_name: 'Ponto Frio',\n    source_status: 'blocked',\n    warning: 'O Ponto Frio também está bloqueando automação pública com 403/Akamai. Precisamos de browser controlado ou endpoint oficial para integrar essa fonte.',\n    extracted_at: new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -208
+      ],
+      "id": "pf1d1d1f-7a5f-4f58-bf7c-1f0b0fbd2004",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "pf1d1d1f-7a5f-4f58-bf7c-1f0b0fbd2005",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "pf1d1d1f-7a5f-4f58-bf7c-1f0b0fbd2006",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0435f3002e081a7fea4f6b9d9fb69e6d66a9ce283c409f889ee2eb8cc504ae5a"
+  },
+  "id": "pontofrio-flow",
+  "tags": []
+}

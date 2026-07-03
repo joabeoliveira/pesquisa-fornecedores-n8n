@@ -1,0 +1,176 @@
+{
+  "name": "Pesquisa de produtos Boa Dica",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -304
+      ],
+      "id": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00001",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pesquisa-boadica",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -912,
+        -112
+      ],
+      "id": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00002",
+      "name": "Webhook",
+      "webhookId": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00003"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\nconst body = input.body || {};\nconst query = body.query || input.query || '';\nconst requestedPages = Number(body.maxPages || input.maxPages || 3);\nconst maxPages = Math.max(1, Math.min(Number.isFinite(requestedPages) ? requestedPages : 3, 5));\n\nreturn Array.from({ length: maxPages }, (_, index) => ({\n  json: {\n    query,\n    page: index + 1,\n    source: 'boadica',\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        -208
+      ],
+      "id": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00008",
+      "name": "Build Page Requests"
+    },
+    {
+      "parameters": {
+        "url": "https://boadica.com.br/WebApi/api/busca/",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ termo: $json.query, l: 1, curpage: $json.page }) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json, text/plain, */*"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -480,
+        -208
+      ],
+      "id": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00004",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payloads = $input.all().map((item) => item.json);\n\nfunction firstString(...values) {\n  for (const value of values) {\n    if (typeof value === 'string' && value.trim()) return value.trim();\n  }\n  return null;\n}\n\nfunction formatCurrency(value) {\n  if (!Number.isFinite(value)) return null;\n  return `R$ ${value.toFixed(2).replace('.', ',')}`;\n}\n\nfunction imageUrl(product) {\n  if (!product || !product.urlImagem) return null;\n  if (product.urlImagem.startsWith('http://') || product.urlImagem.startsWith('https://')) {\n    return product.urlImagem;\n  }\n  const imagePath = String(product.urlImagem);\n  return `https://boadicastatic.blob.core.windows.net/images/prod/imagesprod/${imagePath.startsWith('/') ? imagePath.slice(1) : imagePath}`;\n}\n\nfunction normalizeItem(item) {\n  const product = item.produto || {};\n  const title = firstString(\n    product.especificacao,\n    [product.nomeFabricante, product.modelo].filter(Boolean).join(' '),\n    product.nomeFabricante,\n    product.modelo\n  );\n  if (!title) return null;\n\n  const bestPrice = Number(item.precoMinimo || item.precoMaximo || 0);\n  const link = `https://www.boadica.com.br/produtos/p${product.codProduto}`;\n\n  return {\n    title,\n    product_page_url: link,\n    link,\n    image: imageUrl(product),\n    sku: String(product.codProduto),\n    brand: firstString(product.nomeFabricante, product.fabricante?.nome),\n    source: 'boadica',\n    source_name: 'Boa Dica',\n    price_cash: Number.isFinite(bestPrice) && bestPrice > 0 ? bestPrice : null,\n    price_cash_formatted: Number.isFinite(bestPrice) && bestPrice > 0 ? formatCurrency(bestPrice) : null,\n    price_min: Number.isFinite(Number(item.precoMinimo)) ? Number(item.precoMinimo) : null,\n    price_max: Number.isFinite(Number(item.precoMaximo)) ? Number(item.precoMaximo) : null,\n    offers_count: Number.isFinite(Number(item.numLojas)) ? Number(item.numLojas) : null,\n    description: firstString(product.especificacao, product.deschtml, product.desctxt),\n  };\n}\n\nconst productsBySku = new Map();\nlet totalProductsFound = 0;\nlet totalPages = 1;\nlet searchTerm = 'Não identificado';\n\nfor (const payload of payloads) {\n  const results = Array.isArray(payload.resultados) ? payload.resultados : [];\n  totalProductsFound = Math.max(totalProductsFound, Number(payload.totalEncontrado || 0));\n  totalPages = Math.max(totalPages, Number(payload.paginas || 1));\n  searchTerm = payload.termo || searchTerm;\n\n  for (const item of results) {\n    const product = normalizeItem(item);\n    if (!product) continue;\n    productsBySku.set(product.sku, product);\n  }\n}\n\nconst products = Array.from(productsBySku.values()).sort((a, b) => {\n  const priceA = Number.isFinite(a.price_cash) ? a.price_cash : Number.POSITIVE_INFINITY;\n  const priceB = Number.isFinite(b.price_cash) ? b.price_cash : Number.POSITIVE_INFINITY;\n  return priceA - priceB;\n});\n\nreturn [{\n  json: {\n    products,\n    total_products_found: totalProductsFound || products.length,\n    total_products_returned: products.length,\n    total_pages_available: totalPages,\n    pages_fetched: payloads.length,\n    search_term: searchTerm,\n    source: 'boadica',\n    source_name: 'Boa Dica',\n    extracted_at: new Date().toISOString(),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -208
+      ],
+      "id": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00005",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -32,
+        -208
+      ],
+      "id": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00006",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Build Page Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Page Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Page Requests": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4f3a6b5f-2d66-4f0c-8a3a-9f10bff00007",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0435f3002e081a7fea4f6b9d9fb69e6d66a9ce283c409f889ee2eb8cc504ae5a"
+  },
+  "id": "boadica-flow",
+  "tags": []
+}

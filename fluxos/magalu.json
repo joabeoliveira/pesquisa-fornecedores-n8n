@@ -1,0 +1,105 @@
+{
+  "name": "Pesquisa de produtos Magalu",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -304
+      ],
+      "id": "2f5d6a90-5d42-4d70-8d92-2e1a2d6c1001",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pesquisa-magalu",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -912,
+        -112
+      ],
+      "id": "2f5d6a90-5d42-4d70-8d92-2e1a2d6c1002",
+      "name": "Webhook",
+      "webhookId": "2f5d6a90-5d42-4d70-8d92-2e1a2d6c1003"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $json.body?.query || '';\n\nreturn [{\n  json: {\n    products: [],\n    total_products_found: 0,\n    search_term: query || 'Não identificado',\n    source: 'magalu',\n    source_name: 'Magalu',\n    source_status: 'blocked',\n    warning: 'A Magalu aplica antibot/bloqueio em requisições automáticas. Para esta fonte, precisamos de um fluxo com navegador controlado ou um endpoint oficial.',\n    extracted_at: new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -208
+      ],
+      "id": "2f5d6a90-5d42-4d70-8d92-2e1a2d6c1004",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "2f5d6a90-5d42-4d70-8d92-2e1a2d6c1005",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2f5d6a90-5d42-4d70-8d92-2e1a2d6c1006",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0435f3002e081a7fea4f6b9d9fb69e6d66a9ce283c409f889ee2eb8cc504ae5a"
+  },
+  "id": "magalu-flow",
+  "tags": []
+}
